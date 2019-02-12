@@ -1,7 +1,7 @@
 from flask import jsonify
 from flask import request
 from blackfynn import Blackfynn
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from service.app import app
 from service.config import Config
@@ -89,7 +89,7 @@ def datasets():
     data = []
     channel_array = []
     for item in time_series_items:
-        print(item.name)
+        print((item.name))
         if item.name == name:
             data = item.get_data(length='2s')
     for key in data:
@@ -112,7 +112,7 @@ def channels():
     data = []
     channel_names = []
     for item in time_series_items:
-        print(item.name)
+        print((item.name))
         if item.name == name:
             data = item.get_data(length='1s')
     for key in data:
@@ -129,7 +129,7 @@ def get_channel():
     name = request.headers['Name']
     requested_channel = request.headers['Channel']
     #requested_channel = requested_channel.decode("utf-8")
-    print('request is:' + requested_channel)
+    print(('request is:' + requested_channel))
     global bf
     global time_series_items
     global storedData
@@ -137,13 +137,13 @@ def get_channel():
     channel_names = []
     for item in time_series_items:
         if item.name == name:
-            print 'found name'
+            print('found name')
             for channel in item.channels:
-                print channel
+                print(channel)
                 if channel.name == requested_channel:
                     data = channel.get_data(length='2s')
-                    print 'data is: '
-                    print data
+                    print('data is: ')
+                    print(data)
                     storedData[requested_channel.decode('utf-8')] = data[requested_channel.decode('utf-8')].tolist()
 
 
@@ -157,20 +157,20 @@ def get_file():
         #return 'Not logged in'
 
     file_name = request.headers['FileName']
-    print('request is: ' + file_name)
+    print(('request is: ' + file_name))
     global bf
     try:
         dataset = bf.get_dataset('Zinc Exports')
-        print dataset.name
+        print(dataset.name)
     except:
         return 'Error: Cannot find the Zinc Exports dataset'
     try:
         File_DataPackage = dataset.get_items_by_name(file_name)
-        print File_DataPackage
+        print(File_DataPackage)
     except:
         return 'Error: Cannot find the requested File'
 
-    return urllib2.urlopen(File_DataPackage[0].view[0].url).read()
+    return urllib.request.urlopen(File_DataPackage[0].view[0].url).read()
 
 @app.route("/get_my_ip", methods=["GET"])
 def get_my_ip():
