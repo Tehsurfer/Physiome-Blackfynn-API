@@ -82,7 +82,6 @@ def datasets():
 
     name = request.headers['Name']
     channel = request.headers['Channel']
-    channel = channel.decode('utf-8')
 
     global bf
     global time_series_items
@@ -144,10 +143,10 @@ def get_channel():
                     data = channel.get_data(length='2s')
                     print('data is: ')
                     print(data)
-                    storedData[requested_channel.decode('utf-8')] = data[requested_channel.decode('utf-8')].tolist()
+                    storedData[requested_channel] = data[requested_channel].tolist()
 
 
-    return json.dumps({'data': str(data[requested_channel.decode('utf-8')].tolist())})
+    return json.dumps({'data': str(data[requested_channel].tolist())})
 
 # /api/get_file: Returns a file in blackfynn of a given name
 @app.route('/get_file', methods=['GET'])
