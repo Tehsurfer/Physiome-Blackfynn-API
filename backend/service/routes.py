@@ -193,7 +193,7 @@ def ip_logged_in(request):
 
 
 def write_opencor(filename, data):
-    f = csv.writer(open(filename, "wb"))
+    f = csv.writer(open(filename, "w"))
     datakeys = ['environment | time (unknown unit)']
     for key in data:
         # note that we assume the keys here are in integers between 1-100. The %02d is to switch numbers such as '2' to '02'
