@@ -178,6 +178,7 @@ def get_my_ip():
 # /api/create_openCOR_URL: Returns url of a .csv file export
 @app.route("/create_openCOR_URL", methods=["GET"])
 def createURL():
+    global storedData
     baseURL = 'https://blackfynnpythonlink.ml/data/'
     baseFilePath = '/var/www/html/data/'
     randomURL = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
