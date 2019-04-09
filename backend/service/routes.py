@@ -89,7 +89,7 @@ def datasets():
     channel_array = []
     for item in time_series_items:
         print((item.name))
-        if item.name == name:
+        if item.name == name or item.id == name:
             data = item.get_data(length='2s', use_cache=False)
     for key in data:
         channel_array = data[key]
@@ -112,7 +112,7 @@ def channels():
     channel_names = []
     for item in time_series_items:
         print((item.name))
-        if item.name == name:
+        if item.name == name or item.id == name :
             data = item.get_data(length='1s', use_cache=False)
     for key in data:
         channel_names.append(key)
@@ -135,11 +135,11 @@ def get_channel():
     data = []
     channel_names = []
     for item in time_series_items:
-        if item.name == name:
+        if item.name == name or item.id == name:
             print('found name')
             for channel in item.channels:
                 print(channel)
-                if channel.name == requested_channel:
+                if channel.name == requested_channel or channel.id == requested_channel:
                     data = channel.get_data(length='2s', use_cache=False)
                     print('data is: ')
                     print(data)
