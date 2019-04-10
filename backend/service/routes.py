@@ -90,7 +90,7 @@ def datasets():
     for item in time_series_items:
         print((item.name))
         if item.name == name or item.id == name:
-            data = item.get_data(length='2s', use_cache=False)
+            data = item.get_data(length=length_from_header(), use_cache=False)
     for key in data:
         channel_array = data[key]
         break
@@ -113,7 +113,7 @@ def channels():
     for item in time_series_items:
         print((item.name))
         if item.name == name or item.id == name :
-            data = item.get_data(length='1s', use_cache=False)
+            data = item.get_data(length=length_from_header(), use_cache=False)
     for key in data:
         channel_names.append(key)
     return json.dumps({'data': channel_names}) 
@@ -140,7 +140,7 @@ def get_channel():
             for channel in item.channels:
                 print(channel)
                 if channel.name == requested_channel or channel.id == requested_channel:
-                    data = channel.get_data(length='2s', use_cache=False)
+                    data = channel.get_data(length=length_from_header(), use_cache=False)
                     print('data is: ')
                     print(data)
                     storedData[requested_channel] = data[requested_channel].tolist()
@@ -209,3 +209,10 @@ def write_opencor(filename, data):
         for key in data:
             row.append(data[key][i])
         f.writerow(row)
+
+
+def length_from_header():
+    try:
+        return request.headers['Length']
+    except KeyError:
+        return '1s'
