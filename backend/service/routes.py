@@ -42,12 +42,20 @@ def home2():
     return ('Welcome to a link to the Blackfynn API. Documentation coming soon but for now'
             + 'check out https://github.com/Tehsurfer/Physiome-Blackfynn-API')
 
-@app.route('/dataset/<id>', methods=['GET'])
-def dataset(id):
-    if not ip_logged_in(request):
-        return 'Not logged in'
-    dataset = bf.get_dataset(id)
-    return 'Dataset: {}'.format(dataset.name)
+@app.route('/dataset/<dataset>/package/<package>/channel/<channel>', methods=['GET'])
+def dataset(dataset,package,channel):
+    global bf
+    data_sets = bf.datasets()
+    for data_set in data_sets:
+        if data_set.name == dataset or data_set.id == dataset:
+            for item in data_set.items:
+                if item.name == package or item.id == package:
+                    for ichannel in item.channels:
+                        if ichannel.name == channel or ichannel.id == channel:
+                            data = channel.get_data(length=length_from_header())
+    return data.to_json()
+
+
 
 
 # This route logs in with a given api token and secret and returns the available 
