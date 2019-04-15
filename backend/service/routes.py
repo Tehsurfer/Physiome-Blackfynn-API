@@ -52,7 +52,7 @@ def dataset(dataset,package,channel):
                 if item.name == package or item.id == package:
                     for ichannel in item.channels:
                         if ichannel.name == channel or ichannel.id == channel:
-                            data = channel.get_data(length=length_from_header())
+                            data = ichannel.get_data(length=length_from_header())
     return data.to_json()
 
 
