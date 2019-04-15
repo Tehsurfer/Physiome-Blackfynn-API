@@ -44,6 +44,7 @@ def home2():
 
 @app.route('/dataset/<dataset>/package/<package>/channel/<channel>', methods=['GET'])
 def dataset(dataset,package,channel):
+    print(f'Got requset /dataset/{dataset}/package/{package}/channel/{channel}')
     global bf
     data_sets = bf.datasets()
     for data_set in data_sets:
@@ -152,9 +153,10 @@ def get_channel():
                     print('data is: ')
                     print(data)
                     storedData[requested_channel] = data[requested_channel].tolist()
+                    samplesPerSec = (len(data)/(data.axes[0][-1] - data.axes[0][0]).seconds)
 
 
-    return json.dumps({'data': str(data[requested_channel].tolist())})
+    return json.dumps({'data': str(data[requested_channel].tolist()), 'samplesPerSecond': samplesPerSec})
 
 # /api/get_file: Returns a file in blackfynn of a given name
 @app.route('/get_file', methods=['GET'])
