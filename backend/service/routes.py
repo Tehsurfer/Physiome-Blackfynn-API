@@ -153,10 +153,13 @@ def get_channel():
                     print('data is: ')
                     print(data)
                     storedData[requested_channel] = data[requested_channel].tolist()
-                    samplesPerSec = (len(data)/(data.axes[0][-1] - data.axes[0][0]).seconds)
+                    length = data.axes[0][-1] - data.axes[0][0]
+                    samplesPerSec = (len(data)/length.seconds)
 
 
-    return json.dumps({'data': str(data[requested_channel].tolist()), 'samplesPerSecond': samplesPerSec})
+    return json.dumps({'data': str(data[requested_channel].tolist()),
+                       'samplesPerSecond': samplesPerSec,
+                       'length ': length})
 
 # /api/get_file: Returns a file in blackfynn of a given name
 @app.route('/get_file', methods=['GET'])
