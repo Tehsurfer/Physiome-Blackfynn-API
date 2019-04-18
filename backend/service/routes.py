@@ -1,7 +1,9 @@
 from flask import jsonify
 from flask import request
 from blackfynn import Blackfynn
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 from service.app import app
 from service.config import Config
@@ -12,8 +14,8 @@ import string
 import numpy as np
 
 bf = None
-global user_ip
-global data
+time_series_items = []
+csv_items = []
 storedData = {}
 user_ip = None
 
@@ -21,6 +23,8 @@ user_ip = None
 # having to make a POST request
 
 # @app.before_first_request
+
+
 def connect_to_blackfynn():
     global bf
     bf = Blackfynn(
@@ -37,13 +41,15 @@ def home():
     return ('Welcome to a link to the Blackfynn API. Documentation coming soon but for now'
             + 'check out https://github.com/Tehsurfer/Physiome-Blackfynn-API')
 
+
 @app.route('/', methods=['GET'])
 def home2():
     return ('Welcome to a link to the Blackfynn API. Documentation coming soon but for now'
             + 'check out https://github.com/Tehsurfer/Physiome-Blackfynn-API')
 
+
 @app.route('/dataset/<dataset>/package/<package>/channel/<channel>', methods=['GET'])
-def dataset(dataset,package,channel):
+def dataset(dataset, package, channel):
     #print(f'Got requset /dataset/{dataset}/package/{package}/channel/{channel}')
     global bf
     data_sets = bf.datasets()
@@ -53,13 +59,12 @@ def dataset(dataset,package,channel):
                 if item.name == package or item.id == package:
                     for ichannel in item.channels:
                         if ichannel.name == channel or ichannel.id == channel:
-                            data = ichannel.get_data(length=length_from_header())
+                            data = ichannel.get_data(
+                                length=length_from_header())
     return data.to_json()
 
 
-
-
-# This route logs in with a given api token and secret and returns the available 
+# This route logs in with a given api token and secret and returns the available
 @app.route('/get_timeseries_dataset_names', methods=['POST'])
 def get_timeseries_dataset_names():
     data = json.loads(request.data.decode("utf-8"))
@@ -68,18 +73,23 @@ def get_timeseries_dataset_names():
     bf = Blackfynn(api_token=data['tokenId'], api_secret=data['secret'])
     data_sets = bf.datasets()
 
-    global time_series_items
+    global time_series_items, csv_items, csv_names
     time_series_items = []
     time_series_names = []
+    csv_items = []
+    csv_names = []
     for data_set in data_sets:
         for item in data_set.items:
             if item.type is 'TimeSeries':
                 time_series_items.append(item)
                 time_series_names.append(item.name)
+            if item.type is 'Tabular':
+                csv_items.append(item)
+                csv_names.append(item.name)
 
     global user_ip
     user_ip = request.remote_addr
-    return json.dumps({'names': time_series_names})
+    return json.dumps({'names': time_series_names + csv_names})
 
 # /api/get_channel_data: Returns the data relating to the first channel of a given
 #      dataset
@@ -87,7 +97,7 @@ def get_timeseries_dataset_names():
 def datasets():
     if not ip_logged_in(request):
         pass
-        #return 'Not logged in'
+        # return 'Not logged in'
 
     name = request.headers['Name']
     channel = request.headers['Channel']
@@ -110,7 +120,7 @@ def datasets():
 def channels():
     if not ip_logged_in(request):
         pass
-        #return 'Not logged in'
+        # return 'Not logged in'
 
     name = request.headers['Name']
     global bf
@@ -121,18 +131,32 @@ def channels():
     channel_names = []
     for item in time_series_items:
         print((item.name))
-        if item.name == name or item.id == name :
+        if item.name == name or item.id == name:
             data = item.get_data(length=length_from_header(), use_cache=False)
     for key in data:
         channel_names.append(key)
-    return json.dumps({'data': channel_names}) 
+
+    # process tabular data
+    if channel_names == []:
+        for item in csv_items:
+            if item.name == name or item.id == name:
+                length = 1
+                # TODO: categorise tabular data to find timescales
+                # Note that the below assumes data is spaced in milliseconds!
+                number_of_samples_per_second = 1000
+                number_of_rows = int(length*number_of_samples_per_second)
+                data = item.get_data(number_of_rows)
+    for key in data:
+        channel_names.append(key)
+
+    return json.dumps({'data': channel_names})
 
 # /api/get_channel: Returns data for a single channel
 @app.route('/get_channel', methods=['GET'])
 def get_channel():
     if not ip_logged_in(request):
         pass
-        #return 'Not logged in'
+        # return 'Not logged in'
 
     name = request.headers['Name']
     requested_channel = request.headers['Channel']
@@ -149,13 +173,13 @@ def get_channel():
             for channel in item.channels:
                 print(channel)
                 if channel.name == requested_channel or channel.id == requested_channel:
-                    data = channel.get_data(length=length_from_header(), use_cache=False)
+                    data = channel.get_data(
+                        length=length_from_header(), use_cache=False)
                     print('data is: ')
                     print(data)
                     storedData[requested_channel] = data[requested_channel].tolist()
                     length = (data.axes[0][-1] - data.axes[0][0]).seconds
                     samplesPerSec = (len(data)/length)
-
 
     return json.dumps({'data': str(data[requested_channel].tolist()),
                        'samplesPerSecond': samplesPerSec,
@@ -166,7 +190,7 @@ def get_channel():
 def get_file():
     if not ip_logged_in(request):
         pass
-        #return 'Not logged in'
+        # return 'Not logged in'
 
     file_name = request.headers['FileName']
     print(('request is: ' + file_name))
@@ -184,6 +208,7 @@ def get_file():
 
     return urllib.request.urlopen(File_DataPackage[0].view[0].url).read()
 
+
 @app.route("/get_my_ip", methods=["GET"])
 def get_my_ip():
     return jsonify({'ip': request.remote_addr}), 200
@@ -194,9 +219,11 @@ def createURL():
     global storedData
     baseURL = 'https://blackfynnpythonlink.ml/data/'
     baseFilePath = '/var/www/html/data/'
-    randomURL = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
-    write_opencor(baseFilePath+randomURL+'.csv',storedData)
+    randomURL = ''.join(random.SystemRandom().choice(
+        string.ascii_uppercase + string.digits) for _ in range(6))
+    write_opencor(baseFilePath+randomURL+'.csv', storedData)
     return json.dumps({'url': baseURL+randomURL+'.csv'})
+
 
 def ip_logged_in(request):
     global user_ip
@@ -211,7 +238,7 @@ def write_opencor(filename, data):
     datakeys = ['environment | time (unknown unit)']
     for key in data:
         # note that we assume the keys here are in integers between 1-100. The %02d is to switch numbers such as '2' to '02'
-        datakeys.append(' values | '+ key+ ' (unknown unit)')
+        datakeys.append(' values | ' + key + ' (unknown unit)')
     f.writerow(datakeys)
     size = len(data[next(iter(data))])
 
