@@ -154,13 +154,10 @@ def channels():
 # /api/get_channel: Returns data for a single channel
 @app.route('/get_channel', methods=['GET'])
 def get_channel():
-    if not ip_logged_in(request):
-        pass
-        # return 'Not logged in'
-
     name = request.headers['Name']
     requested_channel = request.headers['Channel']
-    #requested_channel = requested_channel.decode("utf-8")
+
+    # requested_channel = requested_channel.decode("utf-8")
     print(('request is:' + requested_channel))
     global bf
     global time_series_items
@@ -180,8 +177,20 @@ def get_channel():
                     storedData[requested_channel] = data[requested_channel].tolist()
                     length = (data.axes[0][-1] - data.axes[0][0]).seconds
                     samplesPerSec = (len(data)/length)
+    
+    # process tabular data
+    if channel_names == []:
+        for item in csv_items:
+            if item.name == name or item.id == name:
+                length = 1
+                # TODO: categorise tabular data to find timescales
+                # Note that the below assumes data is spaced in milliseconds!
+                samplesPerSec = 1000
+                number_of_rows = int(length*samplesPerSec)
+                storedData = item.get_data(number_of_rows)
+                length = 1
 
-    return json.dumps({'data': str(data[requested_channel].tolist()),
+    return json.dumps({'data': str(storedData[requested_channel]),
                        'samplesPerSecond': samplesPerSec,
                        'length': length})
 
